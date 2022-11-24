@@ -24,6 +24,18 @@ async function run() {
     const phoneCollection = client
       .db("PhonoRetail")
       .collection("PhonesCollection");
+    const brandCollection = client
+      .db("PhonoRetail")
+      .collection("BrandCollection");
+    const bookingCollection = client.db("PhonoRetail").collection("bookings");
+
+    //   get brand names
+
+    app.get("/brands", async (req, res) => {
+      const query = {};
+      const result = await brandCollection.find(query).toArray();
+      res.send(result);
+    });
 
     //   get all phones
     app.get("/phones", async (req, res) => {
@@ -32,12 +44,19 @@ async function run() {
       res.send(result);
     });
 
-    
     // // get all phones by brrandname
     app.get("/phones/:brand", async (req, res) => {
       const brand = req.params.brand;
       const query = { brand: brand };
       const result = await phoneCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // post booking
+    app.post("/bookings", async (req, res) => {
+      const booking = req.body;
+      booking.time=Date()
+      const result = await bookingCollection.insertOne(booking);
       res.send(result);
     });
   } finally {
