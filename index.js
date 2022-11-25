@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
@@ -96,7 +96,7 @@ async function run() {
       const user = await userColletcion.findOne(query);
       if (user) {
         const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
-          expiresIn: "1h",
+          expiresIn: "1d",
         });
         return res.send({ accessToken: token });
       }
@@ -115,6 +115,50 @@ async function run() {
       const query = {};
       const users = await userColletcion.find(query).toArray();
       res.send(users);
+    });
+
+    // get sellers
+    app.get("/allsellers", async (req, res) => {
+      const filter = { role: "seller" };
+      const seller = await userColletcion.find(filter).toArray();
+      res.send(seller);
+    });
+    app.get("/allbuyers", async (req, res) => {
+      const filter = { role: "user" };
+      const seller = await userColletcion.find(filter).toArray();
+      res.send(seller);
+    });
+
+    app.get("/users/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await userColletcion.findOne(query);
+      res.send({ isAdmin: user?.role === "admin" });
+    });
+
+    app.put("/users/admin/:id", verifyJWT, async (req, res) => {
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await userColletcion.findOne(query);
+
+      if (user?.role !== admin) {
+        return res.status(403).send({ message: "Forbidded Access" });
+      }
+
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updatedDoc = {
+        $set: {
+          verified: true,
+        },
+      };
+      const result = await userColletcion.updateOne(
+        filter,
+        updatedDoc,
+        options
+      );
+      res.send(result);
     });
   } finally {
   }
