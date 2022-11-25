@@ -28,6 +28,7 @@ async function run() {
       .db("PhonoRetail")
       .collection("BrandCollection");
     const bookingCollection = client.db("PhonoRetail").collection("bookings");
+    const userColletcion = client.db("PhonoRetail").collection("users");
 
     //   get brand names
 
@@ -55,8 +56,22 @@ async function run() {
     // post booking
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
-      booking.time=Date()
+      booking.time = Date();
       const result = await bookingCollection.insertOne(booking);
+      res.send(result);
+    });
+    // get bookings
+    app.get("/bookings", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const bookings = await bookingCollection.find(query).toArray();
+      res.send(bookings)
+    });
+
+    app.post("/users", async (req, res) => {
+      const users = req.body;
+      users.time = Date();
+      const result = await userColletcion.insertOne(users);
       res.send(result);
     });
   } finally {
