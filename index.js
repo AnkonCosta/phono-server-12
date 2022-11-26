@@ -57,10 +57,25 @@ async function run() {
 
     //   get all phones
     app.get("/phones", async (req, res) => {
-      const query = {};
+      let query = {};
+      // get via email
+      if (req.query.email) {
+        query = {
+          email: req.query.email,
+        };
+      }
       const result = await phoneCollection.find(query).toArray();
       res.send(result);
     });
+
+
+
+    // post to server 
+    app.post('/phones',async (req,res)=>{
+      const phone=req.body;
+      const result=await phoneCollection.insertOne(phone)
+      res.send(result)
+    })
 
     // // get all phones by brrandname
     app.get("/phones/:brand", async (req, res) => {
@@ -89,6 +104,15 @@ async function run() {
       const bookings = await bookingCollection.find(query).toArray();
       res.send(bookings);
     });
+
+// delete bookings
+app.delete('/bookings/:id',async(req,res)=>{
+  const id = req.params.id;
+  const filter = {_id :ObjectId(id)}
+  const result = await bookingCollection.deleteOne(filter)
+  res.send(result)
+})
+
     // jwt
     app.get("/jwt", async (req, res) => {
       const email = req.query.email;
@@ -123,11 +147,27 @@ async function run() {
       const seller = await userColletcion.find(filter).toArray();
       res.send(seller);
     });
+
+// delete seller 
+app.delete('/allsellers/:id',async(req,res)=>{
+  const id = req.params.id;
+  const filter = {_id :ObjectId(id)}
+  const result = await userColletcion.deleteOne(filter)
+  res.send(result)
+})
+
     app.get("/allbuyers", async (req, res) => {
       const filter = { role: "user" };
       const seller = await userColletcion.find(filter).toArray();
       res.send(seller);
     });
+    // delete buyer 
+app.delete('/allbuyers/:id',async(req,res)=>{
+  const id = req.params.id;
+  const filter = {_id :ObjectId(id)}
+  const result = await userColletcion.deleteOne(filter)
+  res.send(result)
+})
 
     app.get("/users/admin/:email", async (req, res) => {
       const email = req.params.email;
@@ -135,13 +175,19 @@ async function run() {
       const user = await userColletcion.findOne(query);
       res.send({ isAdmin: user?.role === "admin" });
     });
+    app.get("/users/seller/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await userColletcion.findOne(query);
+      res.send({ isSeller: user?.role === "seller" });
+    });
 
     app.put("/users/admin/:id", verifyJWT, async (req, res) => {
       const decodedEmail = req.decoded.email;
       const query = { email: decodedEmail };
       const user = await userColletcion.findOne(query);
 
-      if (user?.role !== admin) {
+      if (user?.role !== 'admin') {
         return res.status(403).send({ message: "Forbidded Access" });
       }
 
