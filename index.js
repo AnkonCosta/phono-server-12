@@ -68,14 +68,19 @@ async function run() {
       res.send(result);
     });
 
-
-
-    // post to server 
-    app.post('/phones',async (req,res)=>{
-      const phone=req.body;
-      const result=await phoneCollection.insertOne(phone)
-      res.send(result)
-    })
+    // post to server
+    app.post("/phones", async (req, res) => {
+      const phone = req.body;
+      const result = await phoneCollection.insertOne(phone);
+      res.send(result);
+    });
+    // delete phones
+    app.delete("/phones/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await phoneCollection.deleteOne(filter);
+      res.send(result);
+    });
 
     // // get all phones by brrandname
     app.get("/phones/:brand", async (req, res) => {
@@ -105,13 +110,21 @@ async function run() {
       res.send(bookings);
     });
 
-// delete bookings
-app.delete('/bookings/:id',async(req,res)=>{
-  const id = req.params.id;
-  const filter = {_id :ObjectId(id)}
-  const result = await bookingCollection.deleteOne(filter)
-  res.send(result)
-})
+    // delete bookings
+    app.delete("/bookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await bookingCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    // get specific id
+    app.get("/bookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await bookingCollection.findOne(query);
+      res.send(result);
+    });
 
     // jwt
     app.get("/jwt", async (req, res) => {
@@ -148,26 +161,26 @@ app.delete('/bookings/:id',async(req,res)=>{
       res.send(seller);
     });
 
-// delete seller 
-app.delete('/allsellers/:id',async(req,res)=>{
-  const id = req.params.id;
-  const filter = {_id :ObjectId(id)}
-  const result = await userColletcion.deleteOne(filter)
-  res.send(result)
-})
+    // delete seller
+    app.delete("/allsellers/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await userColletcion.deleteOne(filter);
+      res.send(result);
+    });
 
     app.get("/allbuyers", async (req, res) => {
       const filter = { role: "user" };
       const seller = await userColletcion.find(filter).toArray();
       res.send(seller);
     });
-    // delete buyer 
-app.delete('/allbuyers/:id',async(req,res)=>{
-  const id = req.params.id;
-  const filter = {_id :ObjectId(id)}
-  const result = await userColletcion.deleteOne(filter)
-  res.send(result)
-})
+    // delete buyer
+    app.delete("/allbuyers/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await userColletcion.deleteOne(filter);
+      res.send(result);
+    });
 
     app.get("/users/admin/:email", async (req, res) => {
       const email = req.params.email;
@@ -187,7 +200,7 @@ app.delete('/allbuyers/:id',async(req,res)=>{
       const query = { email: decodedEmail };
       const user = await userColletcion.findOne(query);
 
-      if (user?.role !== 'admin') {
+      if (user?.role !== "admin") {
         return res.status(403).send({ message: "Forbidded Access" });
       }
 
