@@ -3,6 +3,7 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 
 const port = process.env.PORT || 5000;
 
@@ -46,6 +47,8 @@ async function run() {
       .collection("BrandCollection");
     const bookingCollection = client.db("PhonoRetail").collection("bookings");
     const userColletcion = client.db("PhonoRetail").collection("users");
+    const paymentsColletcion = client.db("PhonoRetail").collection("payments");
+    const adsCollection = client.db("PhonoRetail").collection("ads");
 
     //   get brand names
 
@@ -123,6 +126,54 @@ async function run() {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await bookingCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.post("/create-payment-intent", async (req, res) => {
+      const booking = req.body;
+      const price = parseInt(booking.price);
+      const amount = price * 100;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const result = await paymentsColletcion.insertOne(payment);
+      const id = payment.bookingId;
+      const id1 = payment?.phoneId;
+      const query = { _id: ObjectId(id) };
+      const filter = { _id: ObjectId(id1) };
+      const find={_id:id1}
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+      const updatedDoc1 = {
+        $set: {
+          sold: true,
+          transactionId: payment.transactionId,
+        },
+      };
+
+      const updateResult = await bookingCollection.updateOne(query, updatedDoc);
+      const updateResult1 = await phoneCollection.updateOne(
+        filter,
+        updatedDoc1
+      );
+      const updateResult2 = await phoneCollection.updateOne(
+        find,
+        updatedDoc1
+      );
       res.send(result);
     });
 
@@ -217,6 +268,19 @@ async function run() {
         updatedDoc,
         options
       );
+      res.send(result);
+    });
+
+    // advertise
+    app.post("/ads", async (req, res) => {
+      const phone = req.body;
+      const result = await adsCollection.insertOne(phone);
+      res.send(result);
+    });
+
+    app.get("/ads", async (req, res) => {
+      const query = {};
+      const result = await adsCollection.find(query).toArray();
       res.send(result);
     });
   } finally {
